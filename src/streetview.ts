@@ -145,7 +145,7 @@ export async function fetchStreetViewImage(
 
   // 次の地点が指定されている場合、進行方向を計算
   const params: Record<string, string> = {
-    size: "640x480",
+    size: "640x640",
     location: `${lat},${lng}`,
     key: apiKey,
     fov: "90",
