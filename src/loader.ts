@@ -47,5 +47,5 @@ export function loadLocations(filePath?: string): Location[] {
   }
   // [lat, lng] 形式を { lat, lng } 形式に変換（一時的に末尾3件のみ）
   const a = uniqueLocations.map(([lat, lng]) => ({ lat, lng }));
-  return a
+  return a.splice(0,10)
 }

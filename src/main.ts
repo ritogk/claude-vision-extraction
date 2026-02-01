@@ -122,11 +122,10 @@ async function main() {
   console.log("|------|--------|--------|----------------|----------|");
 
   for (const result of results) {
-    const loc = formatLocation(result.location);
     const lanes = result.analysis.lanes;
     const laneWidth = `${result.analysis.lane_width}m`;
     const centerLine = result.analysis.center_line ? "○" : "×";
-    console.log(`| ${loc} | ${lanes} | ${laneWidth} | ${centerLine} | ${result.processingTimeMs}ms |`);
+    console.log(`| (${result.location.lat}, ${result.location.lng}) | ${lanes} | ${laneWidth} | ${centerLine} | ${result.processingTimeMs}ms |`);
   }
 
   // 合計金額を表示
