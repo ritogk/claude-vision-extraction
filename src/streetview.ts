@@ -104,7 +104,7 @@ export function getNextPointFromGeometry(
   return { lat: nextLat, lng: nextLng };
 }
 
-// Street View メタデータを取得して利用可能か確認
+// Street View メタデータを取得して利用可能か確認（Google公式画像のみ）
 export async function checkStreetViewAvailability(
   lat: number,
   lng: number,
@@ -114,11 +114,17 @@ export async function checkStreetViewAvailability(
     params: {
       location: `${lat},${lng}`,
       key: apiKey,
+      source: "outdoor",
     },
   });
 
   if (response.data.status !== "OK") {
     throw new Error(`Street View not available: ${response.data.status}`);
+  }
+
+  // Google公式画像かどうかをcopyrightで確認
+  if (response.data.copyright && !response.data.copyright.includes("Google")) {
+    throw new Error(`User-contributed image skipped: ${response.data.copyright}`);
   }
 
   return response.data;
@@ -144,6 +150,7 @@ export async function fetchStreetViewImage(
     key: apiKey,
     fov: "90",
     pitch: "0",
+    source: "outdoor",
   };
 
   if (nextLat !== undefined && nextLng !== undefined) {

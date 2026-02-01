@@ -25,7 +25,7 @@ export function loadGeometryList(filePath?: string): [number, number][] {
 
 // 位置情報JSONファイルを読み込み
 export function loadLocations(filePath?: string): Location[] {
-  const locationsPath = filePath || path.join(__dirname, "..", "data", "geometry_segment_list.json");
+  const locationsPath = filePath || path.join(__dirname, "..", "data", "geometry_check_list.json");
 
   if (!fs.existsSync(locationsPath)) {
     console.error(`エラー: 位置情報ファイルが見つかりません: ${locationsPath}`);

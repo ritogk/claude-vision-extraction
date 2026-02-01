@@ -32,6 +32,7 @@ function calculateTokenUsage(inputTokens: number, outputTokens: number): TokenUs
 function parseJsonResponse(text: string): RoadAnalysisResponse {
   // コードブロック内のJSONを抽出（```json ... ``` または ``` ... ```）
   const codeBlockMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/);
+  console.log(text)
   const jsonText = codeBlockMatch ? codeBlockMatch[1].trim() : text.trim();
 
   try {
@@ -52,6 +53,7 @@ export async function analyzeRoadWidth(
   const response = await client.messages.create({
     model: MODEL,
     max_tokens: 1024,
+    // temperature: 0,
     messages: [
       {
         role: "user",
