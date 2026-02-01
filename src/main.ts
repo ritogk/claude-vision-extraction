@@ -57,6 +57,39 @@ function saveResultsToJson(results: AnalysisResult[]): string {
   return filePath;
 }
 
+// 単一の位置を分析する関数
+async function analyzeLocation(
+  index: number,
+  location: { lat: number; lng: number },
+  config: { googleMapsApiKey: string },
+  anthropic: Anthropic,
+  totalCount: number
+): Promise<{ index: number; result: AnalysisResult } | null> {
+  console.log(`[${index + 1}/${totalCount}] (${location.lat}, ${location.lng}) を分析開始...`);
+
+  try {
+    const nextPoint = getNextPointFromGeometry(location.lat, location.lng);
+    if (!nextPoint) return null;
+
+    const imageBase64 = await fetchStreetViewImage(
+      index,
+      location.lat,
+      location.lng,
+      config.googleMapsApiKey,
+      nextPoint.lat,
+      nextPoint.lng
+    );
+
+    const result = await analyzeRoadWidth(anthropic, imageBase64, location);
+    console.log(`[${index + 1}/${totalCount}] (${location.lat}, ${location.lng}) 分析完了`);
+    return { index, result };
+  } catch (error) {
+    console.error(`エラー: [${index + 1}] (${location.lat}, ${location.lng}) の分析に失敗しました`);
+    console.error(error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
 // メイン処理
 async function main() {
   console.log("=== Street View 道幅分析ツール ===\n");
@@ -71,55 +104,25 @@ async function main() {
   const locations = loadLocations();
   console.log(`${locations.length} 件の位置情報を読み込みました\n`);
 
-  // 各位置について分析
-  const results: AnalysisResult[] = [];
+  // 各位置について並列で分析
+  const targetLocations = locations.slice(1, locations.length - 1);
+  console.log(`${targetLocations.length} 件を並列処理中...\n`);
 
-  for (let i = 1; i < locations.length - 1; i++) {
-    const location = locations[i];
+  const promises = targetLocations.map((location, i) =>
+    analyzeLocation(i + 1, location, config, anthropic, locations.length)
+  );
 
-    console.log(`\n--- [${i + 1}/${locations.length}] (${location.lat}, ${location.lng}) を分析中... ---`);
+  const rawResults = await Promise.all(promises);
 
-    try {
-      // geometry_list.jsonから進行方向の次のポイントを取得
-      const nextPoint = getNextPointFromGeometry(location.lat, location.lng);
-      if(!nextPoint) continue;
-      // Street View画像を取得
-      console.log("Street View画像を取得中...");
-      const imageBase64 = await fetchStreetViewImage(
-        i,
-        location.lat,
-        location.lng,
-        config.googleMapsApiKey,
-        nextPoint.lat,
-        nextPoint.lng
-      );
-      console.log("画像取得完了、Claude で分析中...");
-
-      // 道幅を分析
-      const result = await analyzeRoadWidth(anthropic, imageBase64, location);
-      results.push(result);
-
-      // 結果を出力
-      console.log("\n【分析結果】");
-      // console.log(`処理時間: ${result.processingTimeMs}ms`);
-      // console.log(`トークン: 入力${result.tokenUsage.inputTokens} / 出力${result.tokenUsage.outputTokens}`);
-      // console.log(`金額: ¥${result.tokenUsage.costJpy} ($${result.tokenUsage.costUsd})`);
-      console.log(`車線数: ${result.analysis.lanes}`);
-      console.log(`車線幅: ${result.analysis.lane_width}m`);
-      console.log(`センターライン: ${result.analysis.center_line ? "あり" : "なし"}`);
-      console.log(`路肩(左): ${result.analysis.shoulder_left ?? "なし"}m`);
-      console.log(`路肩(右): ${result.analysis.shoulder_right ?? "なし"}m`);
-      console.log(`ガードレール(左): ${result.analysis.guardrail_left ? "あり" : "なし"}`);
-      console.log(`ガードレール(右): ${result.analysis.guardrail_right ? "あり" : "なし"}`);
-    } catch (error) {
-      console.error(`エラー: (${location.lat}, ${location.lng}) の分析に失敗しました`);
-      console.error(error instanceof Error ? error.message : error);
-    }
-  }
+  // nullを除外し、index順にソート
+  const results: AnalysisResult[] = rawResults
+    .filter((r): r is { index: number; result: AnalysisResult } => r !== null)
+    .sort((a, b) => a.index - b.index)
+    .map((r) => r.result)
 
   // サマリーを出力
   console.log("\n\n========== 分析結果サマリー ==========\n");
-  console.log("| 座標 | 車線数 | 車線幅 | センターライン | 処理時間 |");
+  console.log("| 座標 | 車線数 | 車幅 | センターライン | 処理時間 |");
   console.log("|------|--------|--------|----------------|----------|");
 
   for (const result of results) {
