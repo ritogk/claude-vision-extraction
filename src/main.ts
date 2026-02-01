@@ -74,7 +74,7 @@ async function main() {
   // 各位置について分析
   const results: AnalysisResult[] = [];
 
-  for (let i = 0; i < locations.length; i++) {
+  for (let i = 1; i < locations.length - 1; i++) {
     const location = locations[i];
 
     console.log(`\n--- [${i + 1}/${locations.length}] (${location.lat}, ${location.lng}) を分析中... ---`);
@@ -86,13 +86,14 @@ async function main() {
       // Street View画像を取得
       console.log("Street View画像を取得中...");
       const imageBase64 = await fetchStreetViewImage(
+        i,
         location.lat,
         location.lng,
         config.googleMapsApiKey,
         nextPoint.lat,
         nextPoint.lng
       );
-      console.log("画像取得完了、Claude Sonnetで分析中...");
+      console.log("画像取得完了、Claude で分析中...");
 
       // 道幅を分析
       const result = await analyzeRoadWidth(anthropic, imageBase64, location);
@@ -100,16 +101,16 @@ async function main() {
 
       // 結果を出力
       console.log("\n【分析結果】");
-      console.log(`処理時間: ${result.processingTimeMs}ms`);
-      console.log(`トークン: 入力${result.tokenUsage.inputTokens} / 出力${result.tokenUsage.outputTokens}`);
-      console.log(`金額: ¥${result.tokenUsage.costJpy} ($${result.tokenUsage.costUsd})`);
+      // console.log(`処理時間: ${result.processingTimeMs}ms`);
+      // console.log(`トークン: 入力${result.tokenUsage.inputTokens} / 出力${result.tokenUsage.outputTokens}`);
+      // console.log(`金額: ¥${result.tokenUsage.costJpy} ($${result.tokenUsage.costUsd})`);
       console.log(`車線数: ${result.analysis.lanes}`);
       console.log(`車線幅: ${result.analysis.lane_width}m`);
       console.log(`センターライン: ${result.analysis.center_line ? "あり" : "なし"}`);
-      console.log(`路肩(進行方向): ${result.analysis.shoulder_forward ?? "なし"}m`);
-      console.log(`路肩(逆側): ${result.analysis.shoulder_opposite ?? "なし"}m`);
-      console.log(`ガードレール(進行方向): ${result.analysis.guardrail_forward ? "あり" : "なし"}`);
-      console.log(`ガードレール(逆側): ${result.analysis.guardrail_opposite ? "あり" : "なし"}`);
+      console.log(`路肩(左): ${result.analysis.shoulder_left ?? "なし"}m`);
+      console.log(`路肩(右): ${result.analysis.shoulder_right ?? "なし"}m`);
+      console.log(`ガードレール(左): ${result.analysis.guardrail_left ? "あり" : "なし"}`);
+      console.log(`ガードレール(右): ${result.analysis.guardrail_right ? "あり" : "なし"}`);
     } catch (error) {
       console.error(`エラー: (${location.lat}, ${location.lng}) の分析に失敗しました`);
       console.error(error instanceof Error ? error.message : error);

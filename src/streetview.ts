@@ -51,8 +51,8 @@ function calculateHeading(
 }
 
 // 画像ファイル名を生成
-function generateImageFileName(lat: number, lng: number): string {
-  return `streetview_${lat}_${lng}.jpg`;
+function generateImageFileName(index: number, lat: number, lng: number): string {
+  return `${index}_streetview_${lat}_${lng}.jpg`;
 }
 
 // 2点間の距離を計算（簡易版、メートル単位）
@@ -127,6 +127,7 @@ export async function checkStreetViewAvailability(
 // Street View画像を取得してBase64エンコード（tmpに保存）
 // nextLat, nextLng を指定すると、その方向を向いた画像を取得する
 export async function fetchStreetViewImage(
+  index: number,
   lat: number,
   lng: number,
   apiKey: string,
@@ -160,7 +161,7 @@ export async function fetchStreetViewImage(
 
   // tmpディレクトリに保存
   ensureTmpDir();
-  const fileName = generateImageFileName(lat, lng);
+  const fileName = generateImageFileName(index, lat, lng);
   const filePath = path.join(TMP_DIR, fileName);
   fs.writeFileSync(filePath, buffer);
 

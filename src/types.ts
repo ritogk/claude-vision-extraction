@@ -12,10 +12,10 @@ export interface RoadAnalysisResponse {
   lanes: number;
   lane_width: number;
   center_line: boolean;
-  shoulder_forward: number | null;
-  shoulder_opposite: number | null;
-  guardrail_forward: boolean;
-  guardrail_opposite: boolean;
+  shoulder_left: number | null;
+  shoulder_right: number | null;
+  guardrail_left: boolean;
+  guardrail_right: boolean;
 }
 
 // トークン使用量と金額
