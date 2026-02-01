@@ -2,7 +2,8 @@ import Anthropic from "@anthropic-ai/sdk";
 import { Location, AnalysisResult, RoadAnalysisResponse, TokenUsage } from "./types";
 import { createRoadWidthAnalysisPrompt } from "./prompts";
 
-const MODEL = "claude-sonnet-4-5-20250929";
+// const MODEL = "claude-sonnet-4-5-20250929";
+const MODEL = "claude-opus-4-5-20251101";
 
 // Claude Sonnet 4 料金 (USD per 1M tokens)
 const PRICE_INPUT_PER_1M = 3.0;

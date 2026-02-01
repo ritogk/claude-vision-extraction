@@ -1,6 +1,7 @@
 import axios from "axios";
 import * as fs from "fs";
 import * as path from "path";
+import { loadGeometryList } from "./loader";
 
 const STREET_VIEW_BASE_URL = "https://maps.googleapis.com/maps/api/streetview";
 const STREET_VIEW_METADATA_URL = "https://maps.googleapis.com/maps/api/streetview/metadata";
@@ -52,6 +53,55 @@ function calculateHeading(
 // 画像ファイル名を生成
 function generateImageFileName(lat: number, lng: number): string {
   return `streetview_${lat}_${lng}.jpg`;
+}
+
+// 2点間の距離を計算（簡易版、メートル単位）
+function calculateDistance(lat1: number, lng1: number, lat2: number, lng2: number): number {
+  const R = 6371000; // 地球の半径（メートル）
+  const toRad = (deg: number) => (deg * Math.PI) / 180;
+
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+  return R * c;
+}
+
+// 現在位置からgeometry_list上の最も近いインデックスを見つけ、次のポイントを返す
+export function getNextPointFromGeometry(
+  currentLat: number,
+  currentLng: number
+): { lat: number; lng: number } | null {
+  const geometryList = loadGeometryList();
+
+  if (geometryList.length < 2) {
+    return null;
+  }
+
+  // 最も近いポイントのインデックスを探す
+  let minDistance = Infinity;
+  let closestIndex = 0;
+
+  for (let i = 0; i < geometryList.length; i++) {
+    const [lat, lng] = geometryList[i];
+    const distance = calculateDistance(currentLat, currentLng, lat, lng);
+    if (distance < minDistance) {
+      minDistance = distance;
+      closestIndex = i;
+    }
+  }
+
+  // 次のインデックスを取得（最後の場合はnull）
+  const nextIndex = closestIndex + 1;
+  if (nextIndex >= geometryList.length) {
+    return null;
+  }
+
+  const [nextLat, nextLng] = geometryList[nextIndex];
+  return { lat: nextLat, lng: nextLng };
 }
 
 // Street View メタデータを取得して利用可能か確認

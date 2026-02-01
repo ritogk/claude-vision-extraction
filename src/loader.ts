@@ -2,9 +2,30 @@ import * as fs from "fs";
 import * as path from "path";
 import { Location, LocationInput } from "./types";
 
+// geometry_list.jsonのキャッシュ
+let geometryListCache: [number, number][] | null = null;
+
+// geometry_list.jsonを読み込み
+export function loadGeometryList(filePath?: string): [number, number][] {
+  if (geometryListCache) {
+    return geometryListCache;
+  }
+
+  const geometryPath = filePath || path.join(__dirname, "..", "data", "geometry_list.json");
+
+  if (!fs.existsSync(geometryPath)) {
+    console.warn(`警告: geometry_list.jsonが見つかりません: ${geometryPath}`);
+    return [];
+  }
+
+  const data = fs.readFileSync(geometryPath, "utf-8");
+  geometryListCache = JSON.parse(data) as [number, number][];
+  return geometryListCache;
+}
+
 // 位置情報JSONファイルを読み込み
 export function loadLocations(filePath?: string): Location[] {
-  const locationsPath = filePath || path.join(__dirname, "..", "data", "locations.json");
+  const locationsPath = filePath || path.join(__dirname, "..", "data", "geometry_segment_list.json");
 
   if (!fs.existsSync(locationsPath)) {
     console.error(`エラー: 位置情報ファイルが見つかりません: ${locationsPath}`);
@@ -25,11 +46,6 @@ export function loadLocations(filePath?: string): Location[] {
     }
   }
   // [lat, lng] 形式を { lat, lng } 形式に変換（一時的に末尾3件のみ）
-  const a = uniqueLocations.slice(0,10).map(([lat, lng]) => ({ lat, lng }));
+  const a = uniqueLocations.map(([lat, lng]) => ({ lat, lng }));
   return a
-}
-
-// 位置情報を文字列にフォーマット
-export function formatLocation(location: Location): string {
-  return `(${location.lat}, ${location.lng})`;
 }

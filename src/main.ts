@@ -4,8 +4,8 @@ import * as path from "path";
 
 import { AnalysisResult, AnalysisOutput, TokenUsage } from "./types";
 import { loadConfig } from "./config";
-import { loadLocations, formatLocation } from "./loader";
-import { fetchStreetViewImage } from "./streetview";
+import { loadLocations } from "./loader";
+import { fetchStreetViewImage, getNextPointFromGeometry } from "./streetview";
 import { analyzeRoadWidth } from "./analyzer";
 
 const OUTPUT_DIR = path.join(__dirname, "..", "output");
@@ -76,20 +76,21 @@ async function main() {
 
   for (let i = 0; i < locations.length; i++) {
     const location = locations[i];
-    const locationStr = formatLocation(location);
 
-    console.log(`\n--- [${i + 1}/${locations.length}] ${locationStr} を分析中... ---`);
+    console.log(`\n--- [${i + 1}/${locations.length}] (${location.lat}, ${location.lng}) を分析中... ---`);
 
     try {
-      const nestLocation = i + 1 < locations.length ? locations[i + 1] : undefined;
+      // geometry_list.jsonから進行方向の次のポイントを取得
+      const nextPoint = getNextPointFromGeometry(location.lat, location.lng);
+      if(!nextPoint) continue;
       // Street View画像を取得
       console.log("Street View画像を取得中...");
       const imageBase64 = await fetchStreetViewImage(
         location.lat,
         location.lng,
         config.googleMapsApiKey,
-        nestLocation ? nestLocation.lat : undefined,
-        nestLocation ? nestLocation.lng : undefined
+        nextPoint.lat,
+        nextPoint.lng
       );
       console.log("画像取得完了、Claude Sonnetで分析中...");
 
@@ -110,7 +111,7 @@ async function main() {
       console.log(`ガードレール(進行方向): ${result.analysis.guardrail_forward ? "あり" : "なし"}`);
       console.log(`ガードレール(逆側): ${result.analysis.guardrail_opposite ? "あり" : "なし"}`);
     } catch (error) {
-      console.error(`エラー: ${locationStr} の分析に失敗しました`);
+      console.error(`エラー: (${location.lat}, ${location.lng}) の分析に失敗しました`);
       console.error(error instanceof Error ? error.message : error);
     }
   }
