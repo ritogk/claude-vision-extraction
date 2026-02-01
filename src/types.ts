@@ -7,11 +7,37 @@ export interface Location {
   lng: number;
 }
 
+// LLMからのJSON応答の型定義
+export interface RoadAnalysisResponse {
+  lanes: number;
+  lane_width: number;
+  center_line: boolean;
+  shoulder_forward: number | null;
+  shoulder_opposite: number | null;
+  guardrail_forward: boolean;
+  guardrail_opposite: boolean;
+}
+
+// トークン使用量と金額
+export interface TokenUsage {
+  inputTokens: number;
+  outputTokens: number;
+  costUsd: number;
+  costJpy: number;
+}
+
 // 分析結果の型定義
 export interface AnalysisResult {
   location: Location;
-  roadWidth: string;
-  confidence: string;
-  description: string;
+  analysis: RoadAnalysisResponse;
   processingTimeMs: number;
+  tokenUsage: TokenUsage;
+}
+
+// 出力用の結合結果
+export interface AnalysisOutput {
+  generatedAt: string;
+  totalLocations: number;
+  totalTokenUsage: TokenUsage;
+  results: AnalysisResult[];
 }

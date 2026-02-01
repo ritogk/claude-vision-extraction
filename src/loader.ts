@@ -14,8 +14,19 @@ export function loadLocations(filePath?: string): Location[] {
   const locationsData = fs.readFileSync(locationsPath, "utf-8");
   const rawLocations: LocationInput[] = JSON.parse(locationsData);
 
+  // 重複削除
+  const uniqueLocationsSet = new Set<string>();
+  const uniqueLocations: LocationInput[] = [];
+  for (const loc of rawLocations) {
+    const key = `${loc[0]},${loc[1]}`;
+    if (!uniqueLocationsSet.has(key)) {
+      uniqueLocationsSet.add(key);
+      uniqueLocations.push(loc);
+    }
+  }
   // [lat, lng] 形式を { lat, lng } 形式に変換（一時的に末尾3件のみ）
-  return rawLocations.slice(-3).map(([lat, lng]) => ({ lat, lng }));
+  const a = uniqueLocations.slice(0,10).map(([lat, lng]) => ({ lat, lng }));
+  return a
 }
 
 // 位置情報を文字列にフォーマット
